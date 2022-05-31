@@ -3,6 +3,7 @@ package io.github.sse245.bachelorproject;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class Main {
 
@@ -16,7 +17,11 @@ public class Main {
             OJLexer lexer = new OJLexer(characterStream);
             OJParser parser = new OJParser(new CommonTokenStream(lexer));
 
-            OJParser.ProgramContext context = parser.program();
+            CompilationVisitor compilationVisitor = new CompilationVisitor();
+
+            compilationVisitor.visit(parser.program());
+
+            compilationVisitor.build(Path.of("Test.class"));
         } catch (IOException exception) {
             exception.printStackTrace();
         }
