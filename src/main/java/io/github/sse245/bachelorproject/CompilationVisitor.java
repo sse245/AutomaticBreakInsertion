@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +54,7 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
 
     @Override
     public Void visitInteger(OJParser.IntegerContext ctx) {
-        mainVisitor.visitLdcInsn(Integer.parseInt(ctx.getText()));
+        mainVisitor.visitIntInsn(Opcodes.SIPUSH, Short.parseShort(ctx.getText()));
 
         return null;
     }
@@ -68,8 +67,10 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
             this.visit(ctx.integer());
         } else if (ctx.expression() != null) {
             this.visit(ctx.expression());
-        } else {
+        } else if (ctx.input_expression() != null) {
             this.visit(ctx.input_expression());
+        } else {
+            this.visit(ctx.array_load());
         }
 
         if (ctx.variable() != null) {
@@ -151,7 +152,7 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitDeclaration(OJParser.DeclarationContext ctx) {
+    public Void visitInt_declaration(OJParser.Int_declarationContext ctx) {
         this.visit(ctx.variable());
 
         String name = ctx.variable().getText();
@@ -173,7 +174,37 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitAssignment(OJParser.AssignmentContext ctx) {
+    public Void visitArray_declaration(OJParser.Array_declarationContext ctx) {
+        System.out.println("Array declaration");
+
+        this.visit(ctx.variable());
+
+        String name = ctx.variable().getText();
+        Label label = new Label();
+
+        mainVisitor.visitLocalVariable(name,
+                "[I",
+                null,
+                label,
+                endLabel,
+                variableIndices.size());
+
+        System.out.println("Variable size: " + variableIndices.size());
+
+        mainVisitor.visitLabel(label);
+
+        this.visit(ctx.expression());
+
+        mainVisitor.visitIntInsn(Opcodes.NEWARRAY, Opcodes.T_INT);
+        mainVisitor.visitVarInsn(Opcodes.ASTORE, variableIndices.size());
+
+        variableIndices.add(name);
+
+        return null;
+    }
+
+    @Override
+    public Void visitInt_assignment(OJParser.Int_assignmentContext ctx) {
         this.visit(ctx.variable());
         this.visit(ctx.expression());
 
@@ -184,6 +215,52 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
         }
 
         mainVisitor.visitVarInsn(Opcodes.ISTORE, index);
+
+        return null;
+    }
+
+    @Override
+    public Void visitArray_assignment(OJParser.Array_assignmentContext ctx) {
+        System.out.println("Array assignment");
+
+        this.visit(ctx.variable());
+
+        int index = variableIndices.indexOf(ctx.variable().getText());
+
+        System.out.println("Index: " + index);
+
+        if (index == -1) {
+            throw new RuntimeException("Var doesn't exist");
+        }
+
+        System.out.println("Writing aload");
+        mainVisitor.visitVarInsn(Opcodes.ALOAD, index);
+
+        this.visit(ctx.expression(0));
+        this.visit(ctx.expression(1));
+
+        mainVisitor.visitInsn(Opcodes.IASTORE);
+
+        return null;
+    }
+
+    @Override
+    public Void visitArray_load(OJParser.Array_loadContext ctx) {
+        System.out.println("Array load");
+
+        this.visit(ctx.variable());
+
+        int index = variableIndices.indexOf(ctx.variable().getText());
+
+        if (index == -1) {
+            throw new RuntimeException("Var doesn't exist");
+        }
+
+        mainVisitor.visitVarInsn(Opcodes.ALOAD, index);
+
+        this.visit(ctx.expression());
+
+        mainVisitor.visitInsn(Opcodes.IALOAD);
 
         return null;
     }

@@ -14,10 +14,20 @@ statement
     | output_statement ;
 
 // assignment statements
-assignment : variable '=' expression ';' ;
+assignment
+    : int_assignment
+    | array_assignment ;
+
+int_assignment : variable '=' expression ';' ;
+array_assignment : variable '[' expression ']' '=' expression ';' ;
 
 // declarations
-declaration : 'int ' variable ';' ;
+declaration
+    : int_declaration
+    | array_declaration ;
+
+int_declaration : 'int ' variable ';' ;
+array_declaration : 'int[' expression '] ' variable ';' ;
 
 // control structures
 control_statement
@@ -51,9 +61,12 @@ mult_operator
 
 factor
     : variable
+    | array_load
     | integer
     | '(' expression ')'
     | input_expression ;
+
+array_load : variable '[' expression ']' ;
 
 // conditions
 condition : expression relation expression ;
