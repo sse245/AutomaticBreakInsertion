@@ -82,8 +82,6 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
 
     @Override
     public Void visitOutput_statement(OJParser.Output_statementContext ctx) {
-        System.out.println("Enter output");
-
         mainVisitor.visitFieldInsn(Opcodes.GETSTATIC,
                 "java/lang/System",
                 "out",
@@ -92,8 +90,6 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
         if (ctx.expression() != null) {
             this.visit(ctx.expression());
         }
-
-        System.out.println("Exit output");
 
         String signature = "I";
 
@@ -115,8 +111,6 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
     public Void visitExpression_ext(OJParser.Expression_extContext ctx) {
         this.visit(ctx.add_operator());
         this.visit(ctx.term());
-
-        System.out.println("Exit expression");
 
         String text = ctx.add_operator().getText();
 
@@ -175,8 +169,6 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
 
     @Override
     public Void visitArray_declaration(OJParser.Array_declarationContext ctx) {
-        System.out.println("Array declaration");
-
         this.visit(ctx.variable());
 
         String name = ctx.variable().getText();
@@ -188,8 +180,6 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
                 label,
                 endLabel,
                 variableIndices.size());
-
-        System.out.println("Variable size: " + variableIndices.size());
 
         mainVisitor.visitLabel(label);
 
@@ -221,19 +211,14 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
 
     @Override
     public Void visitArray_assignment(OJParser.Array_assignmentContext ctx) {
-        System.out.println("Array assignment");
-
         this.visit(ctx.variable());
 
         int index = variableIndices.indexOf(ctx.variable().getText());
-
-        System.out.println("Index: " + index);
 
         if (index == -1) {
             throw new RuntimeException("Var doesn't exist");
         }
 
-        System.out.println("Writing aload");
         mainVisitor.visitVarInsn(Opcodes.ALOAD, index);
 
         this.visit(ctx.expression(0));
@@ -246,8 +231,6 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
 
     @Override
     public Void visitArray_load(OJParser.Array_loadContext ctx) {
-        System.out.println("Array load");
-
         this.visit(ctx.variable());
 
         int index = variableIndices.indexOf(ctx.variable().getText());
