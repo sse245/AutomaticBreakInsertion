@@ -1,9 +1,9 @@
-package io.github.sse245.bachelorproject.analysis;
+package io.github.sse245.abi.analysis;
 
-import io.github.sse245.bachelorproject.OJBaseVisitor;
-import io.github.sse245.bachelorproject.OJParser;
-import io.github.sse245.bachelorproject.graph.Graph;
-import io.github.sse245.bachelorproject.graph.Vertex;
+import io.github.sse245.abi.OJBaseVisitor;
+import io.github.sse245.abi.OJParser;
+import io.github.sse245.abi.graph.Graph;
+import io.github.sse245.abi.graph.Vertex;
 
 import java.util.Collection;
 import java.util.HashSet;

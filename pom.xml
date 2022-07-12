@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.sse245.bachelorproject</groupId>
-    <artifactId>BachelorProject</artifactId>
+    <groupId>io.github.sse245.abi</groupId>
+    <artifactId>AutomaticBreakInsertion</artifactId>
     <version>0.1.0</version>
 
     <properties>
@@ -18,11 +18,13 @@
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
             <version>4.9.3</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>asm</groupId>
             <artifactId>asm</artifactId>
             <version>3.3.1</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -35,10 +37,23 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>io.github.sse245.bachelorproject.Main</mainClass>
+                            <mainClass>io.github.sse245.abi.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.antlr</groupId>

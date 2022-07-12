@@ -1,7 +1,7 @@
-package io.github.sse245.bachelorproject.analysis;
+package io.github.sse245.abi.analysis;
 
-import io.github.sse245.bachelorproject.OJBaseVisitor;
-import io.github.sse245.bachelorproject.OJParser;
+import io.github.sse245.abi.OJBaseVisitor;
+import io.github.sse245.abi.OJParser;
 
 import java.util.Collection;
 

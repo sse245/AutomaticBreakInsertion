@@ -1,0 +1,24 @@
+int n;
+n = in();
+
+int divisor;
+divisor = 2;
+
+int isPrime;
+isPrime = 1;
+
+while(divisor < n) {
+    if(n % divisor == 0) {
+        isPrime = 0;
+    } else ;
+
+    divisor = divisor + 1;
+}
+
+out(n);
+
+if(isPrime == 1) {
+    out(" is prime");
+} else {
+    out(" is not prime");
+}

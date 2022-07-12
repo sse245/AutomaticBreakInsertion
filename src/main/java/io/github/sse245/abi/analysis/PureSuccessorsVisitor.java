@@ -1,7 +1,7 @@
-package io.github.sse245.bachelorproject.analysis;
+package io.github.sse245.abi.analysis;
 
-import io.github.sse245.bachelorproject.OJBaseVisitor;
-import io.github.sse245.bachelorproject.OJParser;
+import io.github.sse245.abi.OJBaseVisitor;
+import io.github.sse245.abi.OJParser;
 
 import java.util.Collection;
 
@@ -20,27 +20,35 @@ public class PureSuccessorsVisitor extends OJBaseVisitor<Boolean> {
 
     @Override
     public Boolean visitBody(OJParser.BodyContext ctx) {
-        this.visitChildren(ctx);
+        Boolean result = this.visitChildren(ctx);
 
         if (this.body == ctx) {
             this.afterBody = true;
         }
 
-        return true;
+        return result;
     }
 
     @Override
     public Boolean visitInt_assignment(OJParser.Int_assignmentContext ctx) {
         this.visitChildren(ctx);
 
-        return this.afterBody && this.variables.contains(ctx.variable().getText());
+        if (!this.afterBody) {
+            return true;
+        }
+
+        return !this.variables.contains(ctx.variable().getText());
     }
 
     @Override
     public Boolean visitArray_assignment(OJParser.Array_assignmentContext ctx) {
         this.visitChildren(ctx);
 
-        return this.afterBody && this.variables.contains(ctx.variable().getText());
+        if (!this.afterBody) {
+            return true;
+        }
+
+        return !this.variables.contains(ctx.variable().getText());
     }
 
     @Override

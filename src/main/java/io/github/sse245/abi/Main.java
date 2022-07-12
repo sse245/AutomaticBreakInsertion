@@ -1,8 +1,8 @@
-package io.github.sse245.bachelorproject;
+package io.github.sse245.abi;
 
-import io.github.sse245.bachelorproject.analysis.*;
-import io.github.sse245.bachelorproject.graph.Graph;
-import io.github.sse245.bachelorproject.graph.Vertex;
+import io.github.sse245.abi.analysis.*;
+import io.github.sse245.abi.graph.Graph;
+import io.github.sse245.abi.graph.Vertex;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
@@ -18,6 +18,10 @@ public class Main {
     public static void main(String[] args) {
         if (args.length < 1) {
             System.out.println("Please provide a path to the input");
+        }
+
+        if (args.length < 2) {
+            System.out.println("Please provide a path to the output");
         }
 
         try {
@@ -60,7 +64,14 @@ public class Main {
                     Collection<String> dependencies = new HashSet<>();
 
                     for (String variable : variables) {
-                        dependencies.addAll(graph.getAllVertices(graph.getVertex(variable)).stream()
+                        Vertex vertex = graph.getVertex(variable);
+
+                        //in this case the variable is never changed in the loop
+                        if (vertex == null) {
+                            continue;
+                        }
+
+                        dependencies.addAll(graph.getAllVertices(vertex).stream()
                                 .map(Vertex::getName)
                                 .collect(Collectors.toUnmodifiableSet()));
                     }
@@ -106,10 +117,10 @@ public class Main {
                 System.out.println(block.getText());
             });
 
-            CompilationVisitor compilationVisitor = new CompilationVisitor();
+            CompilationVisitor compilationVisitor = new CompilationVisitor(breakStatements, args[1]);
 
             compilationVisitor.visit(program);
-            compilationVisitor.build(Path.of("Test.class"));
+            compilationVisitor.build(Path.of(args[1] + ".jar"));
         } catch (IOException exception) {
             exception.printStackTrace();
         }

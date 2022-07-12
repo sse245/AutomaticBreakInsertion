@@ -1,4 +1,4 @@
-package io.github.sse245.bachelorproject.graph;
+package io.github.sse245.abi.graph;
 
 import java.util.Collection;
 import java.util.Collections;

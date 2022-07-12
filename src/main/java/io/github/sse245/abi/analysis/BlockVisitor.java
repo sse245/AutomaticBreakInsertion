@@ -1,8 +1,7 @@
-package io.github.sse245.bachelorproject.analysis;
+package io.github.sse245.abi.analysis;
 
-import io.github.sse245.bachelorproject.OJBaseVisitor;
-import io.github.sse245.bachelorproject.OJParser;
-import org.antlr.v4.runtime.ParserRuleContext;
+import io.github.sse245.abi.OJBaseVisitor;
+import io.github.sse245.abi.OJParser;
 
 import java.util.Collection;
 import java.util.Collections;

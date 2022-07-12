@@ -1,18 +1,21 @@
-package io.github.sse245.bachelorproject;
+package io.github.sse245.abi;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class CompilationVisitor extends OJBaseVisitor<Void> {
+
+    private final String className;
 
     private final ClassWriter writer;
     private final MethodVisitor mainVisitor;
@@ -21,12 +24,19 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
 
     private final Label endLabel = new Label();
 
-    public CompilationVisitor() {
+    private final Map<OJParser.While_statementContext, OJParser.BodyContext> breakStatements;
+
+    private final ArrayDeque<Map.Entry<OJParser.While_statementContext, Label>> loopEndLabels = new ArrayDeque<>();
+
+    public CompilationVisitor(Map<OJParser.While_statementContext, OJParser.BodyContext> breakStatements, String className) {
+        this.className = className;
+        this.breakStatements = breakStatements;
+
         writer = new ClassWriter(0);
 
-        writer.visit(Opcodes.V1_6,
+        writer.visit(Opcodes.V1_5,
                 Opcodes.ACC_PRIVATE,
-                "Test",
+                className,
                 null,
                 "java/lang/Object",
                 null);
@@ -94,7 +104,7 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
         String signature = "I";
 
         if (ctx.STRING() != null) {
-            mainVisitor.visitLdcInsn(trimDoubleQuotes(ctx.STRING().getText()));
+            mainVisitor.visitLdcInsn(prepareString(ctx.STRING().getText()));
 
             signature = "Ljava/lang/String;";
         }
@@ -159,7 +169,7 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
                 endLabel,
                 variableIndices.size());
         mainVisitor.visitLabel(label);
-        mainVisitor.visitLdcInsn(0);
+        mainVisitor.visitIntInsn(Opcodes.BIPUSH, 0);
         mainVisitor.visitVarInsn(Opcodes.ISTORE, variableIndices.size());
 
         variableIndices.add(name);
@@ -260,29 +270,10 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
                 "java/util/Scanner",
                 "<init>",
                 "(Ljava/io/InputStream;)V");
-        mainVisitor.visitInsn(Opcodes.DUP);
-
-        Label start = new Label();
-        Label end = new Label();
-
-        mainVisitor.visitLocalVariable("$",
-                "Ljava/util/Scanner;",
-                null,
-                start,
-                end,
-                variableIndices.size());
-        mainVisitor.visitLabel(start);
-        mainVisitor.visitVarInsn(Opcodes.ASTORE, variableIndices.size());
         mainVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 "java/util/Scanner",
                 "nextInt",
                 "()I");
-        mainVisitor.visitVarInsn(Opcodes.ALOAD, variableIndices.size());
-        mainVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                "java/util/Scanner",
-                "close",
-                "()V");
-        mainVisitor.visitLabel(end);
 
         return null;
     }
@@ -306,6 +297,8 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
         };
 
         Label endLabel = new Label();
+
+        this.loopEndLabels.push(new AbstractMap.SimpleImmutableEntry<>(ctx, endLabel));
 
         mainVisitor.visitJumpInsn(opcode, endLabel);
 
@@ -348,6 +341,31 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
         return null;
     }
 
+    @Override
+    public Void visitBody(OJParser.BodyContext ctx) {
+        this.visitChildren(ctx);
+
+        Label[] breakTo = new Label[1];
+
+        this.loopEndLabels.iterator().forEachRemaining(entry ->
+           this.breakStatements.forEach((loop, body) -> {
+                if (body != ctx || entry.getKey() != loop) {
+                    return;
+                }
+
+                breakTo[0] = entry.getValue();
+            })
+        );
+
+        if (breakTo[0] == null) {
+            return null;
+        }
+
+        mainVisitor.visitJumpInsn(Opcodes.GOTO, breakTo[0]);
+
+        return null;
+    }
+
     public void build(Path path) {
         mainVisitor.visitLabel(endLabel);
         mainVisitor.visitInsn(Opcodes.RETURN);
@@ -356,14 +374,31 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
 
         writer.visitEnd();
 
-        try {
-            Files.write(path, writer.toByteArray(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace();
+//        try {
+//            Files.write(path, bytes, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+        try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(path.toFile()))) {
+            zip.putNextEntry(new ZipEntry(className + ".class"));
+            zip.write(writer.toByteArray());
+            zip.closeEntry();
+
+            zip.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"));
+            zip.write(
+                """
+                Manifest-Version: 1.0
+                Main-Class: %s
+                """.formatted(className).getBytes(StandardCharsets.UTF_8)
+            );
+            zip.closeEntry();
+        } catch (IOException exception) {
+            exception.printStackTrace();
         }
     }
 
-    private String trimDoubleQuotes(String string) {
+    private String prepareString(String string) {
         if (string.length() == 0) {
             return string;
         }
@@ -384,6 +419,9 @@ public class CompilationVisitor extends OJBaseVisitor<Void> {
         if (lastCharacter == '"') {
             output = output.substring(0, output.length() - 1);
         }
+
+        output = output.replace("\\n", "\n");
+        output = output.replace("\\t", "\t");
 
         return output;
     }

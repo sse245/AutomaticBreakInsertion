@@ -1,4 +1,4 @@
-package io.github.sse245.bachelorproject.graph;
+package io.github.sse245.abi.graph;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -7,7 +7,9 @@ public class Graph {
 
     private final Collection<Vertex> vertices = new HashSet<>();
 
-    private boolean hasInfiniteWalk(Vertex source, Collection<? super Vertex> seen) {
+    private boolean hasInfiniteWalk(Vertex source, Collection<Vertex> seen) {
+        Collection<Vertex> original = new HashSet<>(seen);
+
         if (!seen.add(source)) {
             return true;
         }
@@ -17,6 +19,8 @@ public class Graph {
         for (Vertex vertex : source.getPointingTo()) {
             infiniteWalk |= hasInfiniteWalk(vertex, seen);
         }
+
+        seen.removeIf(vertex -> !original.contains(vertex));
 
         return infiniteWalk;
     }

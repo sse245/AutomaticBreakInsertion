@@ -1,0 +1,30 @@
+int n;
+n = in();
+
+int isPalindrome;
+isPalindrome = 1;
+
+int factor;
+factor = 1;
+
+while(n >= factor * 10) {
+    factor = factor * 10;
+}
+
+int divisor;
+divisor = 1;
+
+while(divisor < factor) {
+    if(n / factor % 10 != n / divisor % 10) {
+        isPalindrome = 0;
+    } else ;
+
+    divisor = divisor * 10;
+    factor = factor / 10;
+}
+
+if(isPalindrome == 1) {
+    out("That is a palindrome");
+} else {
+    out("That isn't a palindrome");
+}
