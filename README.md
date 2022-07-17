@@ -7,7 +7,7 @@ extended version of the Orange Juice language.
 ## Building from source
 The program can be built from source by exeucting the following commands:
 ```shell
-mvn clean antl4:antlr4
+mvn clean antlr4:antlr4
 mvn clean package
 ```
 
